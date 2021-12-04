@@ -48,16 +48,27 @@ def process(path):
     '''增强对比度'''
     dst = contrast_boost_add(dst, 2)
     show("zengqiang", dst)
+
+    '''寻找最大值和最小值'''
+    minVal, maxVal, minIdx, maxIdx = cv.minMaxLoc(dst)
     # dst = cv.medianBlur(dst, 5)
     dst = cv.GaussianBlur(dst, (5, 5), 3)
+    dst = cv.normalize(dst, dst=mask, alpha=minVal,
+                       beta=maxVal, norm_type=cv.NORM_MINMAX)
 
-    # show("duibiduzengqiang", dst)
+    '''二值化处理'''
+    _, threshold = cv.threshold(dst, 100, 255, cv.THRESH_BINARY)
+    show("th", threshold)
 
     '''RIO·提取局部并进行处理，中间包括对比度增强与二值化'''
     # dst = Region_One_process(dst, 5, 5, contrast_boost_in)
     dst = cv.adaptiveThreshold(
         dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 101, -1)
-    # show("erzhihuachuli", dst)
+    show("erzhihuachuli", dst)
+
+    '''加法去黑边'''
+    dst = cv.add(dst, threshold)
+    show("processed", dst)
 
     '''降噪处理·滤波操作'''
     dst = cv.medianBlur(dst, 13)
@@ -67,9 +78,8 @@ def process(path):
     dst = cv.morphologyEx(dst, cv.MORPH_OPEN, kernel=kernel)  # 开操作降噪
     # show("kaicaozuo", dst)
     dst = cv.filter2D(dst, -1, kernel=kernel)
-    dst = cv.normalize(dst, dst=mask, alpha=0, beta=255,
-                       norm_type=cv.NORM_MINMAX)
 
+    show("dst", dst)
     # '''Canny检测'''
     # edges = cv.Canny(dst, 10, 1000)
     # show("edges", edges)
@@ -87,7 +97,10 @@ def process(path):
         return background
 
     def hough(src, dst):
+        '''霍夫直线检测'''
         dst = delate_then_erode(dst, 20, 6, 3)
+        kerneld = cv.getStructuringElement(cv.MORPH_RECT, (20, 1))
+        dst = cv.dilate(dst, kerneld)
         show("erode", dst)
         res = cv.Canny(dst, 10, 1000)
         lines = cv.HoughLines(res, 1, np.pi/180, 50)
@@ -95,19 +108,19 @@ def process(path):
         for line in lines:
             rho = line[0][0]  # 第一个元素是距离rho
             theta = line[0][1]  # 第二个元素是角度theta
-            if(3 > theta > 2.984):
+            if (3 > theta > 2.984):
                 # 该直线与第一行的交点
                 pt1 = (int(rho / np.cos(theta)), 0)
                 # 该直线与最后一行的焦点
-                pt2 = (
-                    int((rho - background.shape[0] * np.sin(theta)) / np.cos(theta)), background.shape[0])
+                pt2 = (int(
+                    (rho - background.shape[0] * np.sin(theta)) / np.cos(theta)), background.shape[0])
                 # 绘制一条白线
                 if(pt1[0] > 50 and pt1[0] < 500):
-                    cv.line(background, pt1, pt2, (255, 255, 255), 3)
+                    cv.line(background, pt1, pt2, (255, 255, 255), 2)
         return background
 
     houghP_img = houghP(
-        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst, 40)
+        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst, 50)
     hough_img = hough(
         np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst)
 
@@ -115,7 +128,7 @@ def process(path):
     return cv.add(hough_img, houghP_img)
 
 
-show("img", process("D:/study/opencv/detection/1460000.bmp"))
+show("img", process("D:\\study\\opencv\\detection\\1450000.bmp"))
 
 while True:
     c = cv.waitKey(50)
