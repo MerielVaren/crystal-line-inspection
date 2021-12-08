@@ -325,6 +325,8 @@ path_lst = os.listdir(img_path)
 for i in path_lst:
     process(img_path + "/" + i)
 
+print("Hello world!")
+
 while True:
     c = cv.waitKey(50)
     if c == 27:
