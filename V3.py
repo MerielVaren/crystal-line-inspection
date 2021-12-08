@@ -38,7 +38,7 @@ def lines_crossed(line1, line2):
         y = k1 * x * 1.0 + b1 * 1.0
         point_is_exist = True
 
-    return point_is_exist, (x, y)
+    return point_is_exist
 
 
 def contrast_boost_add(image, n=3):
@@ -144,8 +144,6 @@ def process(path):
     '''加法去黑边'''
     dst = cv.add(dst, threshold)
 
-    show("dst", dst)
-
     # show("processed", dst)
 
     # # dst = cv.erode(dst, ker_erode)
@@ -180,13 +178,15 @@ def process(path):
         dst = cv.medianBlur(dst, 13)
 
         '''累计概率霍夫'''
+        # line_lst = []
         edges = cv.Canny(dst, 10, 1000)
         background = src.copy()
         lines = cv.HoughLinesP(edges, 0.6, np.pi / 180, threshold=minLineLength,
                                minLineLength=minLineLength, maxLineGap=10)
         for x1, y1, x2, y2 in lines[:, 0]:
             line = cv.line(background, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        return background, [(x1, y1, x2, y2) for x1, y1, x2, y2 in lines[:, 0]]
+            # line_lst.append(line)
+        return background
 
     def hough(src, dst):
         '''截断染色左右两边'''
@@ -310,21 +310,7 @@ def process(path):
     else:
         hough_img = hough_img1
 
-    hough_result = cv.add(hough_img, src)
-    houghp_result, houghp_lines = houghP(
-        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst, 50)
-
-    for houghp_line in houghp_lines:
-        point_is_exist, point = lines_crossed(img1_line, houghp_line)
-        if point_is_exist:
-            cv.circle(houghP_img, point, 1, (255, 0, 0), 2)
-
-    if not lines_crossed(img1_line, img2_line):
-        point_is_exist, point = lines_crossed(img2_line, houghp_line)
-        if point_is_exist:
-            cv.circle(houghP_img, point, 1, (255, 0, 0), 2)
-
-    result = cv.add(hough_result, houghp_result)
+    result = cv.add(hough_img, src)
     # show("result", result)
     cv.imwrite("D:/study/opencv/result/" +
                path[-11:-4] + "/result.bmp", result)
@@ -336,10 +322,8 @@ img_path = "D:/study/opencv/detection"
 
 path_lst = os.listdir(img_path)
 
-# for i in path_lst:
-#     process(img_path + "/" + i)
-
-process(img_path + "/" + "1462000.bmp")
+for i in path_lst:
+    process(img_path + "/" + i)
 
 while True:
     c = cv.waitKey(50)
