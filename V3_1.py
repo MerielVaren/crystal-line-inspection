@@ -349,7 +349,7 @@ def process(path):
     cv.imwrite("D:/study/opencv/result/" +
                path[-11:-4] + "/result.bmp", result)
 
-    return int(img1_line != None or img2_line != None)
+    return result
 
 
 img_path = "D:/study/opencv/detection"
@@ -358,8 +358,7 @@ path_lst = os.listdir(img_path)
 
 cnt = 0
 for i in path_lst:
-    cnt += process(img_path + "/" + i)
-print(cnt / len(path_lst))
+    process(img_path + "/" + i)
 # process(img_path + "/1462000.bmp")
 
 
