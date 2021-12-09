@@ -190,6 +190,7 @@ def process(path):
     def hough(src, dst):
         '''截断染色左右两边'''
         dst = dye(dst, 8, 8)
+        show("dye", dst)
         # show("dye", dst)
 
         global cut
@@ -336,8 +337,9 @@ img_path = "D:/study/opencv/detection"
 
 path_lst = os.listdir(img_path)
 
-for i in path_lst:
-    process(img_path + "/" + i)
+# for i in path_lst:
+#     process(img_path + "/" + i)
+process(img_path + "/" + "1462000.bmp")
 
 # with open("D:/study/opencv/failed.txt", 'r', encoding='utf8') as f:
 #     failed = [i.rstrip('\n') for i in f.readlines()]
@@ -346,8 +348,8 @@ for i in path_lst:
 #         with open("D:/study/opencv/failed/" + i, 'wb') as saver:
 #             saver.write(giver.read())
 
-# while True:
-#     c = cv.waitKey(50)
-#     if c == 27:
-#         break
-# cv.destroyAllWindows()
+while True:
+    c = cv.waitKey(50)
+    if c == 27:
+        break
+cv.destroyAllWindows()
