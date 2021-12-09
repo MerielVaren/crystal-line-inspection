@@ -119,7 +119,7 @@ def process(path):
     dst = contrast_boost_add(dst, 2)
     # show("preview", dst)
 
-    cv.imwrite("D:/study/opencv/result/" + path[-11:-4] + "/preview.bmp", dst)
+    preview = dst
 
     # '''寻找最大值和最小值'''
     minVal, maxVal, minIdx, maxIdx = cv.minMaxLoc(dst)
@@ -139,8 +139,7 @@ def process(path):
     dst = cv.adaptiveThreshold(
         dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 101, -1)
 
-    cv.imwrite("D:/study/opencv/result/" + path[-11:-4] + "/binary.bmp", dst)
-
+    binary = dst
     '''加法去黑边'''
     dst = cv.add(dst, threshold)
 
@@ -193,7 +192,8 @@ def process(path):
         dst = dye(dst, 8, 8)
         # show("dye", dst)
 
-        cv.imwrite("D:/study/opencv/result/" + path[-11:-4] + "/cut.bmp", dst)
+        global cut
+        cut = dst
 
         '''膨胀腐蚀'''
         dst = cv.dilate(dst, kerneld)
@@ -261,7 +261,7 @@ def process(path):
         # 形态学闭操作
         res = cv.Canny(dst, 10, 1000)
         # show("canny", res)
-        lines = cv.HoughLines(res, rho=2, theta=np.pi/180, threshold=85)
+        lines = cv.HoughLines(res, rho=2, theta=np.pi/180, threshold=80)
         # lines = list(filter(lambda x: 2.88 < x[0][1] < 3.4, lines))
         # 筛选并排序
         lines = sorted([line for line in lines if 2.88 <
@@ -312,10 +312,24 @@ def process(path):
 
     result = cv.add(hough_img, src)
     # show("result", result)
-    cv.imwrite("D:/study/opencv/result/" +
-               path[-11:-4] + "/result.bmp", result)
 
-    return cv.add(hough_img, houghP_img)
+    # cv.imwrite("D:/study/opencv/result/" +
+    #            path[-11:-4] + "/src.bmp", src)
+
+    # cv.imwrite("D:/study/opencv/result/" +
+    #            path[-11:-4] + "/preview.bmp", preview)
+
+    # cv.imwrite("D:/study/opencv/result/" +
+    #            path[-11:-4] + "/binary.bmp", binary)
+
+    # cv.imwrite("D:/study/opencv/result/" +
+    #            path[-11:-4] + "/cut.bmp", cut)
+
+    # cv.imwrite("D:/study/opencv/result/" +
+    #            path[-11:-4] + "/result.bmp", result)
+
+    # return int(img1_line != None or img2_line != None)
+    return result
 
 
 img_path = "D:/study/opencv/detection"
@@ -325,8 +339,15 @@ path_lst = os.listdir(img_path)
 for i in path_lst:
     process(img_path + "/" + i)
 
-while True:
-    c = cv.waitKey(50)
-    if c == 27:
-        break
-cv.destroyAllWindows()
+# with open("D:/study/opencv/failed.txt", 'r', encoding='utf8') as f:
+#     failed = [i.rstrip('\n') for i in f.readlines()]
+# for i in failed:
+#     with open("D:/study/opencv/detection/" + i, 'rb') as giver:
+#         with open("D:/study/opencv/failed/" + i, 'wb') as saver:
+#             saver.write(giver.read())
+
+# while True:
+#     c = cv.waitKey(50)
+#     if c == 27:
+#         break
+# cv.destroyAllWindows()

@@ -356,7 +356,6 @@ img_path = "D:/study/opencv/detection"
 
 path_lst = os.listdir(img_path)
 
-cnt = 0
 for i in path_lst:
     process(img_path + "/" + i)
 # process(img_path + "/1462000.bmp")
