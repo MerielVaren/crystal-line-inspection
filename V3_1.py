@@ -2,8 +2,6 @@ import cv2 as cv
 import numpy as np
 import os
 
-from numpy.core.numeric import binary_repr
-
 
 def lines_crossed(line1, line2, mode=1):
     '''
