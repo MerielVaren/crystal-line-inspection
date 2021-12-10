@@ -20,10 +20,10 @@ def lines_crossed(line1, line2, mode=1):
     x1, y1, x2, y2 = line1
     x3, y3, x4, y4 = line2
     # 判断相交，第一个为直线，第二个为线段，每一个参数都含有两个点坐标
-    if mode == 2:
-        # if ((y3*(x2-x1)-((y2-y1)*(x3-x1) + y1*(x2-x1))) * (y4*(x2-x1)-((y2-y1)*(x4-x1) + y1*(x2-x1))) > 0):
-        if ((x1 - x3) * (y2 - y3) - (y1 - y3) * (x2 - x3)) * ((x1 - x4) * (y2 - y3) - (y1 - y4) * (x2 - x4)) > 0:
-            return False, (0, 0)
+    # if mode == 2:
+    #     if ((y3*(x2-x1)-((y2-y1)*(x3-x1) + y1*(x2-x1))) * (y4*(x2-x1)-((y2-y1)*(x4-x1) + y1*(x2-x1))) > 0):
+    #     if ((x1 - x3) * (y2 - y3) - (y1 - y3) * (x2 - x3)) * ((x1 - x4) * (y2 - y3) - (y1 - y4) * (x2 - x4)) > 0:
+    #         return False, (0, 0)
 
     if (x2 - x1) == 0:
         k1 = None
@@ -51,6 +51,12 @@ def lines_crossed(line1, line2, mode=1):
         x = (b2 - b1) * 1.0 / (k1 - k2)
         y = k1 * x * 1.0 + b1 * 1.0
         point_is_exist = True
+
+    point = (int(x), int(y))
+    if mode == 2:
+        if point[0] > max(x3, x4) or point[0] < min(x3, x4):
+            point_is_exist = False
+            point = (0, 0)
 
     return point_is_exist, (int(x), int(y))
 
