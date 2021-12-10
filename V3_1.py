@@ -11,7 +11,7 @@ def lines_crossed(line1, line2, mode=1):
     '''
 
     if line1 == None or line2 == None:
-        return False
+        return False, (0, 0)
     point_is_exist = False
 
     x = y = 0
