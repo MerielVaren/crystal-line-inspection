@@ -5,7 +5,7 @@ import os
 
 def lines_crossed(line1, line2, mode=1):
     '''
-    mode：
+    mode:
     1、直线与直线
     2、直线与线段
     '''
