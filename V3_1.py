@@ -245,7 +245,6 @@ def hough(src, dst):
 
 def process(img_path, save_path):
     '''----------------------------------前期操作-----------------------------------'''
-
     '''创建文件夹'''
     try:
         os.mkdir("D:/study/opencv/test/" + img_path[-11:-4])
