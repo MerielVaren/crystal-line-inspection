@@ -196,7 +196,7 @@ def process(path):
                                minLineLength=minLineLength, maxLineGap=10)
         for x1, y1, x2, y2 in lines[:, 0]:
             cv.line(background, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            # line_lst.append(line)
+        # line_lst.append(line)
         return background, [(x1, y1, x2, y2) for x1, y1, x2, y2 in lines[:, 0]]
 
     def hough(src, dst):
