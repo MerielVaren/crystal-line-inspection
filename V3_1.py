@@ -254,18 +254,18 @@ def hough(src, dst):
     return background, ((x1, y1, x2, y2) if len(lines) else None)
 
 
-def process(path):
+def process(img_path, save_path):
     '''----------------------------------前期操作-----------------------------------'''
 
     '''创建文件夹'''
     try:
-        os.mkdir("D:/study/opencv/test/" + path[-11:-4])
+        os.mkdir("D:/study/opencv/test/" + img_path[-11:-4])
     except:
         pass
 
     '''展示图全局化'''
     global src
-    src = cv.imread(path)
+    src = cv.imread(img_path)
 
     '''----------------------------------图像预处理-----------------------------------'''
 
@@ -364,22 +364,23 @@ def process(path):
 
     '''----------------------------------写入结果-----------------------------------'''
 
-    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/preview.bmp", preview)
-    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/binary.bmp", binary)
-    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/cut.bmp", cut)
-    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/result.bmp", result)
+    cv.imwrite(save_path + img_path[-11:-4] + "/preview.bmp", preview)
+    cv.imwrite(save_path + img_path[-11:-4] + "/binary.bmp", binary)
+    cv.imwrite(save_path + img_path[-11:-4] + "/cut.bmp", cut)
+    cv.imwrite(save_path + img_path[-11:-4] + "/result.bmp", result)
 
     return result
 
 
 if __name__ == '__main__':
     img_path = "D:/study/opencv/TEST"
+    save_path = "D:/study/opencv/TEST/"
 
     path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
 
     # for i in path_lst:
     #     process(img_path + "/" + i)
-    process(img_path + "/1444200.bmp")
+    process(img_path + "/1444200.bmp", save_path)
 
     while True:
         c = cv.waitKey(50)
