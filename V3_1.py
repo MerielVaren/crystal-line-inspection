@@ -15,8 +15,8 @@ def lines_crossed(line1, line2, mode=1):
     point_is_exist = False
 
     x = y = 0
-    line1 = [int(i) for i in line1]
-    line2 = [int(i) for i in line2]
+    # line1 = [int(i) for i in line1]
+    # line2 = [int(i) for i in line2]
     x1, y1, x2, y2 = line1
     x3, y3, x4, y4 = line2
     # 判断相交，第一个为直线，第二个为线段，每一个参数都含有两个点坐标
@@ -198,14 +198,12 @@ def process(path):
         dst = cv.medianBlur(dst, 13)
 
         '''累计概率霍夫'''
-        # line_lst = []
         edges = cv.Canny(dst, 10, 1000)
         background = src.copy()
         lines = cv.HoughLinesP(edges, 0.6, np.pi / 180, threshold=minLineLength,
                                minLineLength=minLineLength, maxLineGap=10)
         for x1, y1, x2, y2 in lines[:, 0]:
             cv.line(background, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        # line_lst.append(line)
         return background, [(x1, y1, x2, y2) for x1, y1, x2, y2 in lines[:, 0]]
 
     def hough(src, dst):
@@ -268,7 +266,7 @@ def process(path):
         dst = cv.erode(dst, kernele)
         dst = cv.erode(dst, kernele)
 
-        # show("erode", dst)
+        show("erode", dst)
 
         '''resize函数具有抗齿距的效果'''
         dst = cv.resize(dst, dst.shape, interpolation=cv.INTER_CUBIC)
@@ -365,9 +363,9 @@ img_path = "D:/study/opencv/TEST"
 
 path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
 
-for i in path_lst:
-    process(img_path + "/" + i)
-# process(img_path + "/1462000.bmp")
+# for i in path_lst:
+#     process(img_path + "/" + i)
+process(img_path + "/1422400.bmp")
 
 
 while True:
