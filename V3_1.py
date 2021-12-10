@@ -15,8 +15,9 @@ def lines_crossed(line1, line2, mode=1):
     point_is_exist = False
 
     x = y = 0
-    x1, y1, x2, y2 = line1
+    line1 = [int(i) for i in line1]
     line2 = [int(i) for i in line2]
+    x1, y1, x2, y2 = line1
     x3, y3, x4, y4 = line2
     # 判断相交，第一个为直线，第二个为线段，每一个参数都含有两个点坐标
     if mode == 2:
