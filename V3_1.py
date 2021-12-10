@@ -62,6 +62,7 @@ def lines_crossed(line1, line2, mode=1):
 
 
 def contrast_boost_add(image, n=3):
+    '''图片自加处理'''
     dst = image
     m = dst
     for i in range(n):
@@ -70,18 +71,26 @@ def contrast_boost_add(image, n=3):
 
 
 def contrast_brightness(image, c, b):
+    '''增强对比度, c为对比度默认为1, b为亮度默认为0'''
     h, w = image.shape
     blank = np.zeros([h, w], image.dtype)
     dst = cv.addWeighted(image, c, blank, 1-c, b)
     return dst
 
 
-def dilate_then_erode(img, times, dilate, erode):
+def dilate_then_erode(img, times, dilate_kernel, erode_kernel, dilate_times=1, erode_times=1):
+    '''膨胀并腐蚀
+        img: 图片
+        times: 总次数
+        dilate_kernel: 膨胀卷积核
+        erode_ kernel: 腐蚀卷积核
+        dilate_times: 每一次中连续膨胀次数
+    '''
     dst = img
     for i in range(times):
-        kerneld = cv.getStructuringElement(cv.MORPH_RECT, (1, dilate))
+        kerneld = cv.getStructuringElement(cv.MORPH_RECT, (1, dilate_kernel))
         dst = cv.dilate(dst, kerneld)
-        kernele = cv.getStructuringElement(cv.MORPH_RECT, (erode, 1))
+        kernele = cv.getStructuringElement(cv.MORPH_RECT, (erode_kernel, 1))
         dst = cv.erode(dst, kernele)
     return dst
 
@@ -100,12 +109,23 @@ def dilate_and_erode(image):
 
 
 def show(name, image):
+    '''
+    展示图片
+    name: 窗口名
+    image: 图片
+    '''
     cv.namedWindow(name, cv.WINDOW_NORMAL)
     cv.imshow(name, image)
 
 
-# 截断染色函数，将图像的两边染色，第二个参数为左边染色1/lw，第三个参数为右边染色1/rw,第四个参数为上面的染色范围 第五个参数为染色的灰度值
 def dye(image, lw=5, rw=5,  sh=3, value=255):
+    '''截断染色函数，将图像的两边染色
+        image: 图片
+        lw: 左边染色1/lw
+        rw: 右边染色1/rw
+        sh: 上面的染色范围
+        value: 染色的灰度值
+    '''
     h, w = image.shape
     mask = np.ones([h, w], np.uint8)
     mask *= value
