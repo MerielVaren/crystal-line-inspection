@@ -107,7 +107,7 @@ def dye(image, lw=5, rw=5,  sh=3, value=255):
 
 def process(path):
     try:
-        os.mkdir("D:/study/opencv/result/" + path[-11:-4])
+        os.mkdir("D:/study/opencv/test/" + path[-11:-4])
     except:
         pass
 
@@ -130,7 +130,7 @@ def process(path):
     dst = contrast_boost_add(dst, 2)
     # show("preview", dst)
 
-    cv.imwrite("D:/study/opencv/result/" + path[-11:-4] + "/preview.bmp", dst)
+    cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/preview.bmp", dst)
 
     # '''寻找最大值和最小值'''
     minVal, maxVal, minIdx, maxIdx = cv.minMaxLoc(dst)
@@ -150,7 +150,7 @@ def process(path):
     dst = cv.adaptiveThreshold(
         dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 101, -1)
 
-    cv.imwrite("D:/study/opencv/result/" + path[-11:-4] + "/binary.bmp", dst)
+    cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/binary.bmp", dst)
 
     '''加法去黑边'''
     dst = cv.add(dst, threshold)
@@ -204,7 +204,7 @@ def process(path):
         dst = dye(dst, 8, 8)
         # show("dye", dst)
 
-        cv.imwrite("D:/study/opencv/result/" + path[-11:-4] + "/cut.bmp", dst)
+        cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/cut.bmp", dst)
 
         '''膨胀腐蚀'''
         dst = cv.dilate(dst, kerneld)
@@ -295,7 +295,7 @@ def process(path):
             pt1 = (x1, y1)
             # 该直线与最后一行的焦点
             pt2 = (x2, y2)
-            cv.line(background, pt1, pt2, (255, 255, 0), 5)
+            cv.line(background, pt1, pt2, (255, 0, 0), 5)
 
         return background, ((x1, y1, x2, y2) if len(lines) else None)
 
@@ -327,34 +327,34 @@ def process(path):
         if img1_line != None:
             for houghP_line in houghP_lines:
                 point_is_exsit, point = lines_crossed(
-                    houghP_line, img1_line, 2)
+                    img1_line, houghP_line, 2)
                 if point_is_exsit:
-                    cv.circle(houghP_result, point, 1, (0, 255, 255), 2)
+                    cv.circle(houghP_result, point, 1, (0, 0, 255), 2)
 
         if img2_line != None:
             for houghP_line in houghP_lines:
                 point_is_exsit, point = lines_crossed(
-                    houghP_line, img2_line, 2)
+                    img2_line, houghP_line, 2)
                 if point_is_exsit:
-                    cv.circle(houghP_result, point, 1, (0, 255, 255), 2)
+                    cv.circle(houghP_result, point, 1, (0, 0, 255), 2)
     else:
         for houghP_line in houghP_lines:
-            point_is_exsit, point = lines_crossed(houghP_line, img1_line, 2)
+            point_is_exsit, point = lines_crossed(img1_line, houghP_line, 2)
             if point_is_exsit:
-                cv.circle(houghP_result, point, 1, (0, 255, 255), 2)
+                cv.circle(houghP_result, point, 1, (0, 0, 255), 2)
 
     hough_result = cv.add(hough_img, src)
     result = cv.add(houghP_result, hough_result)
     show("result", result)
-    cv.imwrite("D:/study/opencv/result/" +
+    cv.imwrite("D:/study/opencv/test/" +
                path[-11:-4] + "/result.bmp", result)
 
     return result
 
 
-img_path = "D:/study/opencv/detection"
+img_path = "D:/study/opencv/TEST"
 
-path_lst = os.listdir(img_path)
+path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
 
 for i in path_lst:
     process(img_path + "/" + i)
