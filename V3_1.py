@@ -2,6 +2,8 @@ import cv2 as cv
 import numpy as np
 import os
 
+from numpy.core.numeric import binary_repr
+
 
 def lines_crossed(line1, line2, mode=1):
     '''
@@ -88,10 +90,14 @@ def dilate_then_erode(img, times, dilate_kernel, erode_kernel, dilate_times=1, e
     '''
     dst = img
     for i in range(times):
-        kerneld = cv.getStructuringElement(cv.MORPH_RECT, (1, dilate_kernel))
-        dst = cv.dilate(dst, kerneld)
-        kernele = cv.getStructuringElement(cv.MORPH_RECT, (erode_kernel, 1))
-        dst = cv.erode(dst, kernele)
+        for j in range(dilate_times):
+            kerneld = cv.getStructuringElement(
+                cv.MORPH_RECT, (1, dilate_kernel))
+            dst = cv.dilate(dst, kerneld)
+        for j in range(erode_times):
+            kernele = cv.getStructuringElement(
+                cv.MORPH_RECT, (erode_kernel, 1))
+            dst = cv.erode(dst, kernele)
     return dst
 
 
@@ -134,34 +140,147 @@ def dye(image, lw=5, rw=5,  sh=3, value=255):
     return dst
 
 
+def houghP(src, dst, minLineLength):
+    '''累计概率霍夫'''
+    dst = cv.medianBlur(dst, 13)
+
+    edges = cv.Canny(dst, 10, 1000)
+    background = src.copy()
+    lines = cv.HoughLinesP(edges, 0.6, np.pi / 180, threshold=minLineLength,
+                           minLineLength=minLineLength, maxLineGap=10)
+    for x1, y1, x2, y2 in lines[:, 0]:
+        cv.line(background, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    return background, [(x1, y1, x2, y2) for x1, y1, x2, y2 in lines[:, 0]]
+
+
+def hough(src, dst):
+    '''霍夫直线检测
+        src: 背景图
+        dst: 检测图
+        返回值:
+        background: 绘制直线后的图片
+        ((x1, y1, x2, y2) if len(lines) else None): 检测出的线段集合 (以 (x1, y1, x2, y2) 的形式)
+    '''
+
+    '''定义卷积核'''
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
+    kerneld = cv.getStructuringElement(cv.MORPH_RECT, (1, 3))
+    kernele = cv.getStructuringElement(cv.MORPH_RECT, (3, 1))
+
+    '''膨胀腐蚀'''
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+
+    dst = cv.erode(dst, kernele)
+    dst = cv.erode(dst, kernele)
+    dst = cv.erode(dst, kernele)
+
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+
+    dst = cv.erode(dst, kernele)
+    dst = cv.erode(dst, kernele)
+    dst = cv.erode(dst, kernele)
+
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+
+    dst = cv.erode(dst, kernele)
+    dst = cv.erode(dst, kernele)
+
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(dst, kerneld)
+
+    dst = cv.erode(dst, kernele)
+    dst = cv.erode(dst, kernele)
+    dst = cv.erode(dst, kernele)
+
+    '''resize函数具有抗齿距的效果'''
+    dst = cv.resize(dst, dst.shape, interpolation=cv.INTER_CUBIC)
+    dst = cv.resize(dst, dst.shape, interpolation=cv.INTER_CUBIC)
+
+    # show("temp", dst)
+
+    dst = np.array(dst, dtype=np.uint8)
+    # 形态学闭操作
+    res = cv.Canny(dst, 10, 1000)
+    # show("canny", res)
+    lines = cv.HoughLines(res, rho=2, theta=np.pi/180, threshold=85)
+    # 筛选并排序
+    lines = sorted([line for line in lines if 2.88 <
+                    line[0][1] < 3.4], key=lambda x: x[0][1])
+    background = src.copy()
+
+    if len(lines):
+        # 由极坐标系转换成的霍夫空间下的横纵坐标
+        line = lines[len(lines)//2]
+        rho = line[0][0]  # 第一个元素是距离rho
+        theta = line[0][1]  # 第二个元素是角度theta
+        x1 = int(rho / np.cos(theta))
+        y1 = 0
+        x2 = int((rho - background.shape[0]
+                  * np.sin(theta)) / np.cos(theta))
+        y2 = background.shape[0]
+
+        # 该直线与第一行的交点
+        pt1 = (x1, y1)
+        # 该直线与最后一行的焦点
+        pt2 = (x2, y2)
+        cv.line(background, pt1, pt2, (255, 0, 0), 5)
+
+    return background, ((x1, y1, x2, y2) if len(lines) else None)
+
+
 def process(path):
+    '''----------------------------------前期操作-----------------------------------'''
+
+    '''创建文件夹'''
     try:
         os.mkdir("D:/study/opencv/test/" + path[-11:-4])
     except:
         pass
 
+    '''展示图全局化'''
     global src
     src = cv.imread(path)
-    # 源图片展示
-    # show("input image", src)
-    dst = src
 
-    kernel = cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
-    kerneld = cv.getStructuringElement(cv.MORPH_RECT, (1, 3))
-    kernele = cv.getStructuringElement(cv.MORPH_RECT, (3, 1))
+    '''----------------------------------图像预处理-----------------------------------'''
 
     '''灰度化，降色彩通道为1'''
     dst = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
-    # mask = numpy.zeros(src.shape)  # 黑色掩膜
     mask = np.ones(src.shape)  # 白色掩膜
 
     '''增强对比度'''
     dst = contrast_boost_add(dst, 2)
-    # show("preview", dst)
 
-    cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/preview.bmp", dst)
+    preview = dst
 
-    # '''寻找最大值和最小值'''
+    '''寻找最大值和最小值'''
     minVal, maxVal, minIdx, maxIdx = cv.minMaxLoc(dst)
     # dst = cv.medianBlur(dst, 5)
     dst = cv.normalize(dst, dst=mask, alpha=minVal,
@@ -172,168 +291,38 @@ def process(path):
 
     '''二值化处理'''
     _, threshold = cv.threshold(dst, 100, 255, cv.THRESH_BINARY)
-    # show("th", threshold)
-
-    '''RIO·提取局部并进行处理，中间包括对比度增强与二值化'''
-    # dst = Region_One_process(dst, 5, 5, contrast_boost_in)
     dst = cv.adaptiveThreshold(
         dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 101, -1)
 
-    cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/binary.bmp", dst)
+    binary = dst
 
     '''加法去黑边'''
     dst = cv.add(dst, threshold)
 
-    # show("processed", dst)
-
-    # # dst = cv.erode(dst, ker_erode)
-    # dst = cv.dilate(dst, ker_dilate)
-    # dst = cv.dilate(dst, ker_dilate)
-
-    # dst = cv.erode(dst, ker_erode)
-
     '''降噪处理·滤波操作'''
 
     # dst = cv.medianBlur(dst, 13)
-    # show("zhongzhilvbo", dst)
-
-    # show("temp1", dst)
-    # show("temp2", dst)
 
     # dst = cv.filter2D(dst, -1, kernel=kernel)
 
     # dst = cv.morphologyEx(dst, cv.MORPH_OPEN, kernel=kernel)  # 开操作降噪
-    # show("kaicaozuo", dst)
 
-    # show("dst", dst)
-    # '''Canny检测'''
-    # edges = cv.Canny(dst, 10, 1000)
-    # show("edges", edges)
+    '''----------------------------------霍夫直线检测-----------------------------------'''
 
-    # '''截断染色左右两边'''
-    # dst = dye(dst, 8, 8)
-    # show("dye", dst)
+    '''截断染色左右两边'''
+    global cut
+    cut = dye(dst, 8, 8)
+    hough(src, cut)
 
-    def houghP(src, dst, minLineLength):
-        dst = cv.medianBlur(dst, 13)
-
-        '''累计概率霍夫'''
-        edges = cv.Canny(dst, 10, 1000)
-        background = src.copy()
-        lines = cv.HoughLinesP(edges, 0.6, np.pi / 180, threshold=minLineLength,
-                               minLineLength=minLineLength, maxLineGap=10)
-        for x1, y1, x2, y2 in lines[:, 0]:
-            cv.line(background, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        return background, [(x1, y1, x2, y2) for x1, y1, x2, y2 in lines[:, 0]]
-
-    def hough(src, dst):
-        '''截断染色左右两边'''
-        dst = dye(dst, 8, 8)
-        # show("dye", dst)
-
-        cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/cut.bmp", dst)
-
-        '''膨胀腐蚀'''
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-
-        dst = cv.erode(dst, kernele)
-        dst = cv.erode(dst, kernele)
-        dst = cv.erode(dst, kernele)
-
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-
-        dst = cv.erode(dst, kernele)
-        dst = cv.erode(dst, kernele)
-        dst = cv.erode(dst, kernele)
-
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-
-        dst = cv.erode(dst, kernele)
-        dst = cv.erode(dst, kernele)
-
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-        dst = cv.dilate(dst, kerneld)
-
-        dst = cv.erode(dst, kernele)
-        dst = cv.erode(dst, kernele)
-        dst = cv.erode(dst, kernele)
-
-        show("erode", dst)
-
-        '''resize函数具有抗齿距的效果'''
-        dst = cv.resize(dst, dst.shape, interpolation=cv.INTER_CUBIC)
-        dst = cv.resize(dst, dst.shape, interpolation=cv.INTER_CUBIC)
-
-        # show("temp", dst)
-
-        dst = np.array(dst, dtype=np.uint8)
-        '''霍夫直线检测'''
-        # 形态学闭操作
-        res = cv.Canny(dst, 10, 1000)
-        # show("canny", res)
-        lines = cv.HoughLines(res, rho=2, theta=np.pi/180, threshold=85)
-        # lines = list(filter(lambda x: 2.88 < x[0][1] < 3.4, lines))
-        # 筛选并排序
-        lines = sorted([line for line in lines if 2.88 <
-                       line[0][1] < 3.4], key=lambda x: x[0][1])
-        # print(lines)
-        background = src.copy()
-
-        if len(lines):
-            # 由极坐标系转换成的霍夫空间下的横纵坐标
-            line = lines[len(lines)//2]
-            rho = line[0][0]  # 第一个元素是距离rho
-            theta = line[0][1]  # 第二个元素是角度theta
-            x1 = int(rho / np.cos(theta))
-            y1 = 0
-            x2 = int((rho - background.shape[0]
-                     * np.sin(theta)) / np.cos(theta))
-            y2 = background.shape[0]
-
-            # 该直线与第一行的交点
-            pt1 = (x1, y1)
-            # 该直线与最后一行的焦点
-            pt2 = (x2, y2)
-            cv.line(background, pt1, pt2, (255, 0, 0), 5)
-
-        return background, ((x1, y1, x2, y2) if len(lines) else None)
-
-    # 左右检测线
+    '''检测左右晶线'''
     img = cv.flip(dst, 1)
     hough_img2, img2_line = hough(
         np.zeros([src.shape[0], src.shape[1], 3], src.dtype), img)
 
     hough_img1, img1_line = hough(
-        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst)
+        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), cut)
 
+    '''使用镜像翻转检测右半图晶线'''
     hough_img2 = cv.flip(hough_img2, 1)
 
     if img2_line != None:
@@ -349,6 +338,7 @@ def process(path):
         np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst, 40)
 
     houghP_result = houghP_img
+
     '''绘制直线与绿线交点'''
     if not lines_crossed(img1_line, img2_line):
         if img1_line != None:
@@ -373,23 +363,28 @@ def process(path):
     hough_result = cv.add(hough_img, src)
     result = cv.add(houghP_result, hough_result)
     show("result", result)
-    cv.imwrite("D:/study/opencv/test/" +
-               path[-11:-4] + "/result.bmp", result)
+
+    '''----------------------------------写入结果-----------------------------------'''
+
+    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/preview.bmp", preview)
+    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/binary.bmp", binary)
+    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/cut.bmp", cut)
+    # cv.imwrite("D:/study/opencv/test/" + path[-11:-4] + "/result.bmp", result)
 
     return result
 
 
-img_path = "D:/study/opencv/TEST"
+if __name__ == '__main__':
+    img_path = "D:/study/opencv/TEST"
 
-path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
+    path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
 
-# for i in path_lst:
-#     process(img_path + "/" + i)
-process(img_path + "/1422400.bmp")
+    # for i in path_lst:
+    #     process(img_path + "/" + i)
+    process(img_path + "/1444200.bmp")
 
-
-while True:
-    c = cv.waitKey(50)
-    if c == 27:
-        break
-cv.destroyAllWindows()
+    while True:
+        c = cv.waitKey(50)
+        if c == 27:
+            break
+    cv.destroyAllWindows()
