@@ -99,74 +99,14 @@ def dilate_then_erode(img, times, dilate_kernel, erode_kernel, dilate_times=1, e
     return dst
 
 
-def dilate_and_erode(image):
-
-    ker_dilate = cv.getStructuringElement(cv.MORPH_RECT, (2, 3))
-    ker_erode = cv.getStructuringElement(cv.MORPH_RECT, (3, 2))
-    # dst = cv.erode(dst, ker_erode)
-    dst = cv.dilate(image, ker_dilate)
-    dst = cv.dilate(dst, ker_dilate)
-    dst = cv.dilate(dst, ker_dilate)
-    dst = cv.erode(dst, ker_erode)
-
-    return dst
-
-
-def show(name, image):
-    '''
-    展示图片
-    name: 窗口名
-    image: 图片
-    '''
-    cv.namedWindow(name, cv.WINDOW_NORMAL)
-    cv.imshow(name, image)
-
-
-def dye(image, lw=5, rw=5,  sh=3, value=255):
-    '''截断染色函数，将图像的两边染色
-        image: 图片
-        lw: 左边染色1/lw
-        rw: 右边染色1/rw
-        sh: 上面的染色范围
-        value: 染色的灰度值
-    '''
-    h, w = image.shape
-    mask = np.ones([h, w], np.uint8)
-    mask *= value
-    mask[2*int(h/sh):h, int(w/lw): int(w-w/rw)] = 0
-    dst = cv.add(mask, image)
-    return dst
-
-
-def houghP(src, dst, minLineLength):
-    '''累计概率霍夫'''
-    dst = cv.medianBlur(dst, 13)
-
-    edges = cv.Canny(dst, 10, 1000)
-    background = src.copy()
-    lines = cv.HoughLinesP(edges, 0.6, np.pi / 180, threshold=minLineLength,
-                           minLineLength=minLineLength, maxLineGap=10)
-    for x1, y1, x2, y2 in lines[:, 0]:
-        cv.line(background, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    return background, [(x1, y1, x2, y2) for x1, y1, x2, y2 in lines[:, 0]]
-
-
-def hough(src, dst):
-    '''霍夫直线检测
-        src: 背景图
-        dst: 检测图
-        返回值:
-        background: 绘制直线后的图片
-        ((x1, y1, x2, y2) if len(lines) else None): 检测出的线段集合 (以 (x1, y1, x2, y2) 的形式)
-    '''
-
+def dilate_and_erode_for_hough(image):
     '''定义卷积核'''
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
     kerneld = cv.getStructuringElement(cv.MORPH_RECT, (1, 3))
     kernele = cv.getStructuringElement(cv.MORPH_RECT, (3, 1))
 
     '''膨胀腐蚀'''
-    dst = cv.dilate(dst, kerneld)
+    dst = cv.dilate(image, kerneld)
     dst = cv.dilate(dst, kerneld)
     dst = cv.dilate(dst, kerneld)
     dst = cv.dilate(dst, kerneld)
@@ -222,7 +162,56 @@ def hough(src, dst):
     dst = cv.resize(dst, dst.shape, interpolation=cv.INTER_CUBIC)
     dst = cv.resize(dst, dst.shape, interpolation=cv.INTER_CUBIC)
 
-    # show("temp", dst)
+    return dst
+
+
+def show(name, image):
+    '''
+    展示图片
+    name: 窗口名
+    image: 图片
+    '''
+    cv.namedWindow(name, cv.WINDOW_NORMAL)
+    cv.imshow(name, image)
+
+
+def dye(image, lw=5, rw=5,  sh=3, value=255):
+    '''截断染色函数，将图像的两边染色
+        image: 图片
+        lw: 左边染色1/lw
+        rw: 右边染色1/rw
+        sh: 上面的染色范围
+        value: 染色的灰度值
+    '''
+    h, w = image.shape
+    mask = np.ones([h, w], np.uint8)
+    mask *= value
+    mask[2*int(h/sh):h, int(w/lw): int(w-w/rw)] = 0
+    dst = cv.add(mask, image)
+    return dst
+
+
+def houghP(src, dst, minLineLength):
+    '''累计概率霍夫'''
+    dst = cv.medianBlur(dst, 13)
+
+    edges = cv.Canny(dst, 10, 1000)
+    background = src.copy()
+    lines = cv.HoughLinesP(edges, 0.6, np.pi / 180, threshold=minLineLength,
+                           minLineLength=minLineLength, maxLineGap=10)
+    for x1, y1, x2, y2 in lines[:, 0]:
+        cv.line(background, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    return background, [(x1, y1, x2, y2) for x1, y1, x2, y2 in lines[:, 0]]
+
+
+def hough(src, dst):
+    '''霍夫直线检测
+        src: 背景图
+        dst: 检测图
+        返回值:
+        background: 绘制直线后的图片
+        ((x1, y1, x2, y2) if len(lines) else None): 检测出的线段集合 (以 (x1, y1, x2, y2) 的形式)
+    '''
 
     dst = np.array(dst, dtype=np.uint8)
     # 形态学闭操作
@@ -309,7 +298,10 @@ def process(img_path, save_path):
 
     '''截断染色左右两边'''
     cut = dye(dst, 8, 8)
-    hough(src, cut)
+
+    dilate = dilate_and_erode_for_hough(cut)
+
+    hough(src, dilate)
 
     '''检测左右晶线'''
     img = cv.flip(dst, 1)
@@ -317,7 +309,7 @@ def process(img_path, save_path):
         np.zeros([src.shape[0], src.shape[1], 3], src.dtype), img)
 
     hough_img1, img1_line = hough(
-        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), cut)
+        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dilate)
 
     '''使用镜像翻转检测右半图晶线'''
     hough_img2 = cv.flip(hough_img2, 1)
@@ -366,6 +358,7 @@ def process(img_path, save_path):
     cv.imwrite(save_path + img_path[-11:-4] + "/preview.bmp", preview)
     cv.imwrite(save_path + img_path[-11:-4] + "/binary.bmp", binary)
     cv.imwrite(save_path + img_path[-11:-4] + "/cut.bmp", cut)
+    cv.imwrite(save_path + img_path[-11:-4] + "/dilate.bmp", dilate)
     cv.imwrite(save_path + img_path[-11:-4] + "/result.bmp", result)
 
     return result
@@ -377,9 +370,9 @@ if __name__ == '__main__':
 
     path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
 
-    # for i in path_lst:
-    #     process(img_path + "/" + i)
-    process(img_path + "/1444200.bmp", save_path)
+    for i in path_lst:
+        process(img_path + "/" + i, save_path)
+    # process(img_path + "/1444200.bmp", save_path)
 
     while True:
         c = cv.waitKey(50)
