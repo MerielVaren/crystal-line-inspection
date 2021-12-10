@@ -322,7 +322,7 @@ def process(path):
         hough_img = hough_img1
 
     houghP_img, houghP_lines = houghP(
-        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst, 50)
+        np.zeros([src.shape[0], src.shape[1], 3], src.dtype), dst, 40)
 
     houghP_result = houghP_img
     '''绘制直线与绿线交点'''
