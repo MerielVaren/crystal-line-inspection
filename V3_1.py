@@ -247,7 +247,7 @@ def process(img_path, save_path):
     '''----------------------------------前期操作-----------------------------------'''
     '''创建文件夹'''
     try:
-        os.mkdir("D:/study/opencv/test/" + img_path[-11:-4])
+        os.mkdir("D:/study/opencv/result/" + img_path[-11:-4])
     except:
         pass
 
@@ -364,11 +364,11 @@ def process(img_path, save_path):
 
 
 if __name__ == '__main__':
-    img_path = "D:/study/opencv/TEST"
+    img_path = "D:/study/opencv/detection"
     save_path = "D:/study/opencv/result/"
 
     path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
-
+    
     for i in path_lst:
         process(img_path + "/" + i, save_path)
     # process(img_path + "/1444200.bmp", save_path)
