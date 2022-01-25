@@ -236,10 +236,10 @@ def hough(src, dst, th=70):
 
     background = src.copy()
 
-    if len(lines):
+    # if len(lines):
         # 由极坐标系转换成的霍夫空间下的横纵坐标
-        # for line in lines:
-        line = lines[len(lines)//2]
+    for line in lines:
+        # line = lines[len(lines)//2]
         rho = line[0][0]  # 第一个元素是距离rho
         theta = line[0][1]  # 第二个元素是角度theta
         x1 = int(rho / np.cos(theta))
@@ -393,6 +393,10 @@ def huno_process1(img_path, save_path):
 
     houghP_result = houghP_img
 
+    show("img1", hough_img1)
+    show("img2", hough_img2)
+
+
     '''绘制直线与绿线交点'''
     if not lines_crossed(img1_line, img2_line):
         if img1_line != None:
@@ -416,6 +420,10 @@ def huno_process1(img_path, save_path):
 
     hough_result = cv.add(hough_img, src)
     result = cv.add(hough_img, src)
+
+    show("hp", houghP_result)
+    show("h" ,hough_result)
+
     # result = cv.add(houghP_result, hough_result)
 
     '''----------------------------------写入结果与展示-----------------------------------'''
