@@ -350,7 +350,7 @@ def process(img_path, save_path):
 
     hough_result = cv.add(hough_img, src)
     result = cv.add(houghP_result, hough_result)
-    show("result", result)
+    # show("result", result)
 
     '''----------------------------------写入结果-----------------------------------'''
 
@@ -365,7 +365,7 @@ def process(img_path, save_path):
 
 if __name__ == '__main__':
     img_path = "D:/study/opencv/TEST"
-    save_path = "D:/study/opencv/TEST/"
+    save_path = "D:/study/opencv/result/"
 
     path_lst = [i for i in os.listdir(img_path) if i.endswith(".bmp")]
 
